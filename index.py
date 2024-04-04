@@ -1,9 +1,13 @@
+from flask import Flask, request, redirect, Response
 from http import HTTPStatus
 import re
 import requests
 from urllib.parse import urlparse
 
-def handle_request(request):
+app = Flask(__name__)
+
+@app.route('/', methods=['GET'])
+def handle_request():
     url = request.url
     parsed_url = urlparse(url)
     path = parsed_url.path
@@ -20,7 +24,7 @@ def handle_request(request):
                 stream = re.search(r'(?<=hlsManifestUrl":").*\.m3u8', text)
 
                 if stream:
-                    return Response(stream.group(0), status_code=HTTPStatus.FOUND)
+                    return redirect(stream.group(0), code=HTTPStatus.FOUND)
                 else:
                     raise ValueError('HLS manifest URL not found')
             else:
@@ -29,3 +33,6 @@ def handle_request(request):
             raise ValueError(f'Channel ID not found in URL: {url}')
     else:
         raise ValueError(f'Path not found: {path}')
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=8080)
